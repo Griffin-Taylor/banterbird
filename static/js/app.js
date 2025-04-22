@@ -1,16 +1,39 @@
 const username = "admin";
 
-function renderPost(post) {
-    const template = document.getElementById("post-template").content.cloneNode(true);
+function renderPost(post, isNew = false) {
+    const template = document
+        .getElementById("post-template")
+        .contentEditable.cloneNode(true);
     template.querySelector(".username").innerText = post.username;
     template.querySelector(".message").innerText = post.message;
-    document.getElementById("feed").appendChild(template);
+    if (isNew){
+        document.getElementById("feed").prepend(template);
+    } else {
+        document.getElementById("feed").appendChild(template);
+    }
 }
 
-function submitPost() {
+async function submitPost() {
     const message = document.getElementById("postInput").value;
-    console.log("Would post:", message);
-    alert("Tweet submitted (not really yet)");
+    try{
+        const response = await fetch("/api/posts", {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                username: username,
+                message: message,
+            }),      
+        });
+        if (response.ok) {
+            renderPost({ username: username, message: message}, true);
+            document.getElementById("postInput").value;}
+        
+    } catch (error){
+        console.log(error)
+    }
+    
 }
 
 window.onload = async() => {
@@ -18,7 +41,8 @@ window.onload = async() => {
        const response = await fetch("/api/posts");
        const posts = await response.json();
        posts.forEach((post) => renderPost(post))
-    } catch (error) {
+    } 
+    catch (error) {
         console.error("error fetching posts:", error)
     }
        
